@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <iframe id="iframecontent" style="
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  border: none;
+" src = 'http://10.1.65.102:8000/mcp/airLift/queryPrice/price-info' onload="iframeLoad()"></iframe>
+<script>
+function iframeLoad() {
+    // document.getElementById("iframecontent").contentWindow.postMessage("父页面向子页面发送消息", "http://10.1.65.102:8000");
+    var data = {
+             cmdType: "embedIframeOps",
+             args: {
+                 type: "initCookie",
+                 cookies: [{
+                     key: "mcp2.mwclg.com",
+                     value: "123z"
+                 }]
+             }
+         }
+         document.getElementById("iframecontent").contentWindow.postMessage(data, '*')
+        }
+</script>
+</body>
+</html>

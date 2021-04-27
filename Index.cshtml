@@ -1,0 +1,174 @@
+@{
+    Layout = "~/Views/Shared/_IndexLayout.cshtml";
+
+    var url = ViewBag.Url;
+}
+<iframe id="frmContent" src="@url" scrolling="no" style="width: 100%;/* min-height: 800px; */margin: 0 auto;height: 99%;">
+</iframe>
+<script>
+    //alert('@url');
+    function parentTest() {
+        alert("_IndexLayout");
+    }
+    function createTab(id, title, sysFlag, url) {
+        top.tablist.newTab({
+            id: id,
+            title: title,
+            closed: true,
+            replace: true,
+            //moduleid: "M10468",
+            icon: "fa fa-file-text-o",
+            url: "/CrossPlatform/index?url=" + url,
+            sysFlag: sysFlag
+        });
+    }
+    function closeTab() {
+        top.tablist.close();
+    }
+    function closeTarget(id, sysFlag) {
+        top.tablist.closeTarget({ id: id, sysFlag: sysFlag });
+    }
+    function refreshTab(id) {
+        //alert("index.cshtml");
+        top.tablist.refreshTab({ id: id });
+    }
+    function refreshActiveOrOpen(id, title, sysFlag, url, closeTabId) {
+        top.tablist.refreshActiveOrOpen({
+            id: id,
+            title: title,
+            sysFlag: sysFlag,
+            url: "/CrossPlatform/index?url=" + url,
+            closeTabId: closeTabId
+        });
+    }
+    function refreshTarget(id, sysFlag) {
+        top.tablist.refreshTarget({
+            id: id,
+            sysFlag: sysFlag
+        });
+    }
+    function recoverFrames() {
+        var iframes = document.querySelectorAll('iframe:not(#frmContent)');
+        for (var i = 0; i < iframes.length; i++) {
+            var iframeId = '#' + iframes[i].id;
+            var iframe = $(iframeId).prop('contentWindow');
+            $(iframeId).attr('src', 'about:blank');
+            try {
+                iframe.document.write('');
+                iframe.document.clear();
+            } catch (e) { }
+
+            //把iframe从页面移除
+            iframes[i].remove();
+        }
+    }
+    function adjustOldFrame(id, height) {
+        var oldFrame = document.getElementById(id);
+        if (oldFrame) {
+            oldFrame.style = "width: 100%;margin: 0 auto;height: " + (99 - height) + "%;";
+        }
+    }
+    function autofitHeight(id) {
+        var ifr = document.getElementById(id);
+        const deviceHeight = document.documentElement.clientHeight;
+        ifr.style.height = (Number(deviceHeight)) + 'px';
+    }
+    function getCookie(object, name) {
+        var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+        if (object.document) {
+            if (arr = object.document.cookie.match(reg))
+                return unescape(arr[2]);
+            else
+                return null;
+        }
+    }
+    function setCookie(object, name, value) {
+        if (object.document && name && value) {
+            object.document.cookie = name + "=" + escape(value);
+        }
+    }
+    function domainURI(str) {
+        var durl = /^http(s)?:\/\/([^\/]+)\//i;
+        domain = str.match(durl);
+        return domain[1];
+    }
+    /* data格式：
+    {
+        cmdType: 'embedIframeOps',
+        args: {
+            source: 'widget',
+            type: 'createOrRefresh',
+            id: 'demoId',
+            src: 'http://www.demo.com/demo.html',
+            height: 97
+        }
+    }*/
+    function embedIframeOps(data) {
+        if (!data.args || !data.args.type || !data.args.id || !data.args.src)
+            return;
+        var height = data.args.height || 0;
+        height = height > 99 ? 99 : height;
+        switch (data.args.type) {
+            case "popUp":
+                dialogOpenWithCallBack({
+                    id: data.args.id,
+                    title: data.args.title,
+                    url: data.args.src,
+                    width: data.args.width || "800px",
+                    height: data.args.height || "500px",
+                    btn: null,
+                    end: function (iframeId) {
+                        var data = {
+                            cmdType: 'embedIframeOps',
+                            args: {
+                                source: 'dialog',
+                                type: 'opsCallback',
+                                id: iframeId
+                            }
+                        };
+                        data.isComplete = 1;
+                        document.getElementById("frmContent").contentWindow.postMessage(data, '*');
+                    }
+                });
+                break;
+            case "openNewTab":
+                createTab(data.args.id, data.args.title, data.args.source, window.btoa(data.args.src));
+                break;
+            default:
+                console.log("recieve message:", e.data);
+                break;
+        }
+    }
+    window.addEventListener('message', function (e) {
+        if (e.data && e.data.cmdType) {
+            switch (e.data.cmdType) {
+                case "embedIframeOps":
+                    embedIframeOps(e.data);
+                    break;
+                default:
+                    console.log("recieve message:", e.data);
+            }
+        }
+    }, false);
+     window.onload = function () {
+         var iframe = document.getElementById("frmContent");
+         var content = (iframe.contentWindow || iframe.contentDocument);
+         var cookie = getCookie(this, "mcp2.mwclg.com");
+		 var ssocookie = getCookie(this, "sso-token");
+         var data = {
+             cmdType: "embedIframeOps",
+             args: {
+                 type: "initCookie",
+                 cookies: [{
+                     key: "mcp2.mwclg.com",
+                     value: cookie
+                 },
+				 {
+				     key: "sso-token",
+				     value: ssocookie
+				 }]
+             }
+         }
+         document.getElementById("frmContent").contentWindow.postMessage(data, '*')
+     }
+</script>
